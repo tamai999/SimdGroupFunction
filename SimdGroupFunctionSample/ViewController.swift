@@ -83,9 +83,18 @@ class ViewController: UIViewController {
             computeEncoder.endEncoding()
             
             //
+            // 時間計測準備
+            //
+            var sTimebaseInfo = mach_timebase_info()
+            if sTimebaseInfo.denom == 0 {
+                mach_timebase_info(&sTimebaseInfo)
+            }
+            let absoluteTimeToSecond = Double(sTimebaseInfo.numer) / Double(sTimebaseInfo.denom) / Double(NSEC_PER_SEC)
+            var start, cpuStart, end: UInt64
+            
+            //
             // GPUでの計算開始
             //
-            var start, cpuStart, end: UInt64
             var gpuResult: DataType = 0
             start = mach_absolute_time()
             
@@ -98,10 +107,9 @@ class ViewController: UIViewController {
             }
             end = mach_absolute_time()
             
-            let gpuCpuTime = Double(end - start) / Double(NSEC_PER_SEC) * 1000
-            let cpuTime = Double(end - cpuStart) / Double(NSEC_PER_SEC) * 1000
-            var resultLabel = "GPU:\n\n sum [\(gpuResult)]\n time[\(String(format: "%.7f", gpuCpuTime))]ms\n 内、CPU time[\(String(format: "%.7f", cpuTime))]ms\n\n"
-//            var resultLabel = "GPU:\n\n sum [\(String(format: "%.1f", gpuResult))]\n time[\(String(format: "%.7f", gpuCpuTime))]s\n 内、CPU time[\(String(format: "%.7f", cpuTime))]s\n\n"
+            let gpuCpuTime = Double(end - start) * absoluteTimeToSecond
+            let cpuTime = Double(end - cpuStart) * absoluteTimeToSecond
+            var resultLabel = "GPU:\n\n sum [\(gpuResult)]\n time[\(String(format: "%.5f", gpuCpuTime))]s\n 内、CPU time[\(String(format: "%.7f", cpuTime))]s\n\n"
 
             //
             // CPUでの計算開始
@@ -116,8 +124,8 @@ class ViewController: UIViewController {
             }
             end = mach_absolute_time()
             
-            let cupTime = Double(end - start) / Double(NSEC_PER_SEC) * 1000
-            resultLabel += "CPU:\n\n sum [\(cpuResult)]\n time[\(String(format: "%.7f", cupTime))]ms\n\n\n"
+            let cupTime = Double(end - start) * absoluteTimeToSecond
+            resultLabel += "CPUのみ:\n\n sum [\(cpuResult)]\n time[\(String(format: "%.5f", cupTime))]s\n\n\n"
             resultLabel += "sumの計算差異(CPU-GPU) [\(cpuResult - gpuResult)]\n\n"
             resultLabel += "GPUの計算速度は CPUだけの場合の[\(String(format: "%.1f", cupTime/gpuCpuTime))]倍"
             
