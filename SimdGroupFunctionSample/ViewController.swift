@@ -53,6 +53,10 @@ class ViewController: UIViewController {
     }
     
     func setupMetal() {
+        if !device.supportsFamily(.apple7) {
+            // SIMD-scoped reduction operations に対応していない機種
+            fatalError("A14以降の機種でお試しください")
+        }
         // コンピュートパイプライン生成
         let defaultLibrary = device.makeDefaultLibrary()!
         let descriptor = MTLComputePipelineDescriptor()
